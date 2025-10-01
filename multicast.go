@@ -135,15 +135,20 @@ func (c *UDPConn) JoinMulticastGroup(iface *net.Interface, gaddr *net.UDPAddr) e
 
 // SetMulticastTTL sets the multicast TTL (IPv4) or hop limit (IPv6) used for
 // outbound multicast packets.
-func (c *UDPConn) SetMulticastTTL(hoplim int) error {
+func (c *UDPConn) SetMulticastTTL(ttl int) error {
 	switch c.network {
 	case "udp4":
-		return c.ipv4conn.SetMulticastTTL(hoplim)
+		return c.ipv4conn.SetMulticastTTL(ttl)
 	case "udp6":
-		return c.ipv6conn.SetMulticastHopLimit(hoplim)
+		return c.ipv6conn.SetMulticastHopLimit(ttl)
 	default:
 		panic("unreachable")
 	}
+}
+
+// SetMulticastHopLimit is an alias to SetMulticastTTL for API symmetry for IPv6.
+func (c *UDPConn) SetMulticastHopLimit(hoplim int) error {
+	return c.SetMulticastTTL(hoplim)
 }
 
 // SetMulticastLoopback sets whether multicast packets sent from this socket
