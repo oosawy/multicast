@@ -146,6 +146,19 @@ func (c *UDPConn) SetMulticastTTL(hoplim int) error {
 	}
 }
 
+// SetMulticastLoopback sets whether multicast packets sent from this socket
+// should be looped back to the local sockets.
+func (c *UDPConn) SetMulticastLoopback(on bool) error {
+	switch c.network {
+	case "udp4":
+		return c.ipv4conn.SetMulticastLoopback(on)
+	case "udp6":
+		return c.ipv6conn.SetMulticastLoopback(on)
+	default:
+		panic("unreachable")
+	}
+}
+
 // WriteToMulticast sends buf to the multicast address addr using all joined
 // interfaces. Any errors encountered during transmission on each interface
 // are aggregated and returned as a joined error.
