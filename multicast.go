@@ -6,6 +6,7 @@ import (
 	"net"
 	"runtime"
 
+	reuseport "github.com/libp2p/go-reuseport"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
@@ -162,6 +163,15 @@ func (c *UDPConn) SetMulticastLoopback(on bool) error {
 	default:
 		panic("unreachable")
 	}
+}
+
+func (c *UDPConn) ReuseAddrPort() error {
+	raw, err := c.UDPConn.SyscallConn()
+	if err != nil {
+		return err
+	}
+	err = reuseport.Control("", "", raw)
+	return err
 }
 
 // WriteToMulticast sends buf to the multicast address addr using all joined
