@@ -107,30 +107,20 @@ func (c *UDPConn) Close() error {
 //	conn, err := multicast.ListenMulticastUDPIfaces("udp4", nil, addr)
 //	gaddr := &net.UDPAddr{IP: net.IPv4(224, 0, 0, 251), Port: 5353}
 //	err := conn.JoinMulticastGroup(iface, gaddr)
-func (c *UDPConn) JoinMulticastGroup(iface *net.Interface, gaddr *net.UDPAddr) error {
-	if iface == nil {
-		return errors.New("multicast: interface cannot be nil")
-	}
+func (c *UDPConn) JoinMulticastGroup(ifaces []net.Interface, gaddr *net.UDPAddr) error {
 	if gaddr == nil {
 		return errors.New("multicast: group address cannot be nil")
 	}
 
-	switch c.network {
-	case "udp4":
-		err := c.ipv4conn.JoinGroup(iface, gaddr)
-		if err != nil {
-			return err
-		}
-	case "udp6":
-		err := c.ipv6conn.JoinGroup(iface, gaddr)
-		if err != nil {
-			return err
-		}
-	default:
-		panic("unreachable")
+	if ifaces == nil {
+		ifaces = c.ifaces
 	}
 
-	c.ifaces = append(c.ifaces, *iface)
+	ok, err := c.joinIfaces(ifaces, gaddr)
+	if !ok {
+		return err
+	}
+
 	return nil
 }
 
@@ -230,7 +220,7 @@ func (c *UDPConn) joinIfaces(ifaces []net.Interface, gaddr *net.UDPAddr) (ok boo
 	var fails int
 
 	for _, iface := range ifaces {
-		if err := c.JoinMulticastGroup(&iface, gaddr); err != nil {
+		if err := c.joinGroup(&iface, gaddr); err != nil {
 			fails++
 			errs = errors.Join(errs, err)
 		}
@@ -243,6 +233,43 @@ func (c *UDPConn) joinIfaces(ifaces []net.Interface, gaddr *net.UDPAddr) (ok boo
 		return true, fmt.Errorf("multicast: failed to join %d/%d interfaces: %w", fails, len(ifaces), errs)
 	}
 	return true, nil
+}
+
+func (c *UDPConn) joinGroup(iface *net.Interface, gaddr *net.UDPAddr) error {
+	if iface == nil {
+		return errors.New("multicast: interface cannot be nil")
+	}
+	if gaddr == nil {
+		return errors.New("multicast: group address cannot be nil")
+	}
+
+	switch c.network {
+	case "udp4":
+		err := c.ipv4conn.JoinGroup(iface, gaddr)
+		if err != nil {
+			return err
+		}
+	case "udp6":
+		err := c.ipv6conn.JoinGroup(iface, gaddr)
+		if err != nil {
+			return err
+		}
+	default:
+		panic("unreachable")
+	}
+
+	var found bool
+	for _, ifi := range c.ifaces {
+		if ifi.Index == iface.Index {
+			found = true
+			break
+		}
+	}
+	if !found {
+		c.ifaces = append(c.ifaces, *iface)
+	}
+
+	return nil
 }
 
 func multicastInterfaces() ([]net.Interface, error) {
