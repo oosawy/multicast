@@ -26,17 +26,17 @@ packet from all joined interfaces.
 go get github.com/oosawy/multicast
 ```
 
-## Usage (quick example)
+## Usage
 
 An example that sends an mDNS query and listens for responses is available in
 `examples/mdns`.
 
-Build and run the example (fish shell):
+Build and run the example:
 
-```fish
+```bash
 cd examples/mdns
-go build -o mdns-example
-./mdns-example my-host.local
+go build -o mdns-query
+./mdns-query my-host.local
 ```
 
 Core usage example (excerpt):
