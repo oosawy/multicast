@@ -11,6 +11,10 @@ import (
 )
 
 var (
+	zeroAddrUDP4 = &net.UDPAddr{
+		IP:   net.IPv4zero,
+		Port: 0,
+	}
 	mdnsAddrUDP4 = &net.UDPAddr{
 		IP:   net.IPv4(224, 0, 0, 251),
 		Port: 5353,
@@ -22,15 +26,19 @@ func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("Usage: %s <name to query>", os.Args[0])
 	}
-	name := os.Args[1]
+	name := dns.Fqdn(os.Args[1])
 
-	conn, err := multicast.ListenMulticastUDPIfaces("udp4", nil, mdnsAddrUDP4)
+	conn, err := multicast.ListenMulticastUDPIfaces("udp4", nil, zeroAddrUDP4)
 	if err != nil {
 		log.Fatal("Failed to create connection:", err)
 	}
 	defer conn.Close()
 
+	conn.JoinMulticastGroup(nil, mdnsAddrUDP4)
+
 	conn.SetMulticastTTL(mdnsMulticastTTL)
+	conn.SetMulticastLoopback(true)
+	conn.ReuseAddrPort()
 
 	log.Printf("Listening on %s", conn.LocalAddr())
 
@@ -53,6 +61,8 @@ func main() {
 		for _, q := range msg.Answer {
 			log.Printf("Received DNS answer:\n\t%s", q.String())
 		}
+
+		os.Exit(0)
 	}
 }
 
