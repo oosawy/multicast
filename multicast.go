@@ -3,6 +3,7 @@ package multicast
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"runtime"
 
@@ -10,6 +11,14 @@ import (
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
+
+const packageName = "multicast"
+
+var logger *slog.Logger
+
+func init() {
+	logger = slog.Default().With("pkg", packageName)
+}
 
 // UDPConn is a UDP connection configured for multicast communication.
 // It embeds net.UDPConn and provides convenience methods for multicast
@@ -75,9 +84,12 @@ func ListenMulticastUDPIfaces(network string, ifaces []net.Interface, addr *net.
 	}
 
 	ok, err := conn.joinIfaces(ifaces, addr)
-	if !ok && err != nil {
+	if !ok {
 		conn.Close()
 		return nil, err
+	}
+	if err != nil {
+		logger.Warn("multicast: some interfaces failed to join multicast group", "error", err)
 	}
 
 	return conn, nil
@@ -119,6 +131,9 @@ func (c *UDPConn) JoinMulticastGroup(ifaces []net.Interface, gaddr *net.UDPAddr)
 	ok, err := c.joinIfaces(ifaces, gaddr)
 	if !ok {
 		return err
+	}
+	if err != nil {
+		logger.Warn("multicast: some interfaces failed to join multicast group", "error", err)
 	}
 
 	return nil
