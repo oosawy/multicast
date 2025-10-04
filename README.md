@@ -112,6 +112,22 @@ if err != nil {
   library logs a warning via the `slog` package describing the partial failure.
   The connection will still be returned if at least one interface succeeded.
 
+### Limitations of `net.ListenMulticastUDP()`
+
+Go's standard `net.ListenMulticastUDP(network, ifi, gaddr)` function is limited
+as it only accepts a single interface for listening. This makes it unsuitable
+for applications that need to listen or send on multiple or all network
+interfaces. While passing `nil` as `ifi` and using a wildcard address might join
+all multicast-capable interfaces, this depends on platforms and is not
+recommended even in Golang docs.
+
+For example, RFC 6762 for Multicast DNS specifies that a simple resolver that is
+not a fully compliant mDNS querier _MUST NOT_ use port `:5353` as the source
+port for its queries. Instead, it must bind to port `:0` (an ephemeral port
+assigned by the operating system) and then join the multicast group. The
+standard `net.ListenMulticastUDP()` function does not properly support this
+common use case.
+
 ## Acknowledgements
 
 This library's multicast sending logic was partly inspired by
