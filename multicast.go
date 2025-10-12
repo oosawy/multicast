@@ -17,7 +17,15 @@ const packageName = "multicast"
 var logger *slog.Logger
 
 func init() {
-	logger = slog.Default().With("pkg", packageName)
+	SetLogger(nil)
+}
+
+func SetLogger(l *slog.Logger) {
+	if l == nil {
+		logger = slog.Default().With("pkg", packageName)
+	} else {
+		logger = l.With("pkg", packageName)
+	}
 }
 
 // UDPConn is a UDP connection configured for multicast communication.
