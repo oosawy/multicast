@@ -68,7 +68,7 @@ func ListenMulticastUDPIfaces(network string, ifaces []net.Interface, addr *net.
 	}
 
 	if ifaces == nil {
-		ifaces, err = multicastInterfaces()
+		ifaces, err = Interfaces()
 		if err != nil {
 			return nil, fmt.Errorf("multicast: failed to get multicast interfaces: %w", err)
 		}
@@ -305,12 +305,13 @@ func (c *UDPConn) joinGroup(iface *net.Interface, gaddr *net.UDPAddr) error {
 	return nil
 }
 
-func multicastInterfaces() ([]net.Interface, error) {
-	var mifaces []net.Interface
+// Interfaces returns the interfaces that up and multicast-capable.
+func Interfaces() ([]net.Interface, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
+	mifaces := make([]net.Interface, 0, len(ifaces))
 	for _, ifi := range ifaces {
 		if (ifi.Flags&net.FlagUp) != 0 && (ifi.Flags&net.FlagMulticast) != 0 {
 			mifaces = append(mifaces, ifi)
