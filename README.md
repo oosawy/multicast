@@ -1,10 +1,14 @@
 # multicast
 
-A small Go helper library for UDP multicast with multi-interface support.
+> [!WARNING]
+> This project is no longer maintained because sending multicast on multiple
+> interfaces is a very rare use case, mostly limited to mDNS queries. For a
+> simple mDNS query library, see
+> [oosawy/simplemdns](https://github.com/oosawy/simplemdns), and for multicast
+> send/receive implementation, see
+> [its transport implementation](https://github.com/oosawy/simplemdns/tree/main/internal/transport).
 
-:::note This library is not thoroughly tested. Please test it carefully in your
-environment and verify it behaves as expected before using it in production. Bug
-reports and pull requests are welcome. :::
+A Go library for UDP multicast
 
 This package provides a thin wrapper to simplify IPv4/IPv6 multicast
 send/receive. It supports joining multicast groups on multiple network
